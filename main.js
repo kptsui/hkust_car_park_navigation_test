@@ -19,13 +19,11 @@ $(document).ready(function(){
 		crs: L.CRS.Simple
 	});
 
-	var bounds = [[0,0], [401,312]]; // [height, width]
+	var bounds = [[0,0], [800,600]]; // [height, width]
 	// add image to map
 	var image = L.imageOverlay('img/floor_plan.png', bounds).addTo(map);
 	map.fitBounds(bounds);
-	// center the view in y, x : 200, 156, zoom = 1
-	map.setView( [200, 156], 1);
-	
+
 	// set marker
 	//marker = L.marker([371, 178], {icon: markerIcon});
   //marker.addTo(map).bindPopup('You are around here!'); // y, x in pixel
@@ -36,6 +34,17 @@ $(document).ready(function(){
 
 	// center the view according to the marker
 	// map.setView( [210, 110], 1);
+
+
+  /*
+  Testing
+  */
+  var test_data = '[{"bid": 1, "rssi": -59},{"bid": 2, "rssi": -62},{"bid": 3, "rssi": -62},{"bid": 4, "rssi": -75},{"bid": 5, "rssi": -80}]';
+  updateMarker(test_data);
+  test_data = '[{"bid": 1, "rssi": -75},{"bid": 2, "rssi": -62},{"bid": 3, "rssi": -62},{"bid": 4, "rssi": -75},{"bid": 5, "rssi": -80}]';
+  updateMarker(test_data);
+  test_data = '[{"bid": 3, "rssi": -62},{"bid": 4, "rssi": -75},{"bid": 5, "rssi": -80}]';
+  updateMarker(test_data);
 });
 
 /*
@@ -49,18 +58,32 @@ input object array = [
 ];
 */
 function updateMarker(arr){ // arr must be json array string
-
-  var result = findClosestBeaconAsPoint(JSON.parse(arr));
+  var jsonArray = JSON.parse(arr);
+  if(jsonArray.length == 0){
+    console.log("Empty array");
+    return;
+  }
+  var result = findClosestBeaconAsPoint(jsonArray);
+  console.log("Match point, bid: " + result.bid + ", x: " + result.x + ", y: " + result.y);
 
 	// remove previous marker
-  console.log("remove previous marker");
   if(marker != null){
     map.removeLayer(marker);
+    console.log("remove previous marker");
   }
 
 	// re-print the marker
 	marker = L.marker([result.y, result.x], {icon: markerIcon});
   marker.addTo(map).bindPopup('You are around here!'); // y, x in pixel
+  console.log("print marker");
+
+  var path_order = graph.findShortestPath('p' + result.bid, 'c'); // ['a', 'c', 'b']
+  if(path_order != null && path_order.length > 1){
+    // TODO: print the path
+  }
+  console.log(path_order);
+
+  console.log("------------------------------");
 
 	// center the view according to the marker
 	// map.setView( [y, x], 1);
@@ -76,15 +99,16 @@ received_beacons = [
 ];
 */
 function findClosestBeaconAsPoint(received_beacons){
-  var min_rssi = Number.MAX_SAFE_INTEGER;
+  var max_rssi = Number.MIN_SAFE_INTEGER;
   var closestBeacon;
   for(var i = 0; i < received_beacons.length; i++){
     var beacon = received_beacons[i];
-    if(beacon.rssi < min_rssi){
-      min_rssi = beacon.rssi;
+    if(beacon.rssi > max_rssi){
+      max_rssi = beacon.rssi;
       closestBeacon = beacon;
     }
   }
+  console.log("closest Beacon bid: " + closestBeacon.bid + ", rssi: " + closestBeacon.rssi);
   var result = {
     "bid": -1,
     "rssi": 0,
