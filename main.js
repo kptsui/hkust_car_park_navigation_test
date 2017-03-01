@@ -2,6 +2,15 @@ var map = null;
 var markerIcon = null;
 var marker = null;
 
+var yx = L.latLng;
+
+var xy = function(x, y) {
+	if (L.Util.isArray(x)) {    // When doing xy([x, y]);
+		return yx(x[1], x[0]);
+	}
+	return yx(y, x);  // When doing xy(x, y);
+};
+
 $(document).ready(function(){
     // init marker icon
     markerIcon = L.icon({
@@ -41,11 +50,75 @@ $(document).ready(function(){
   */
   var test_data = '[{"bid": 1, "rssi": -59},{"bid": 2, "rssi": -62},{"bid": 3, "rssi": -62},{"bid": 4, "rssi": -75},{"bid": 5, "rssi": -80}]';
   updateMarker(test_data);
-  test_data = '[{"bid": 1, "rssi": -75},{"bid": 2, "rssi": -62},{"bid": 3, "rssi": -62},{"bid": 4, "rssi": -75},{"bid": 5, "rssi": -80}]';
+  /*test_data = '[{"bid": 1, "rssi": -75},{"bid": 2, "rssi": -62},{"bid": 3, "rssi": -62},{"bid": 4, "rssi": -75},{"bid": 5, "rssi": -80}]';
   updateMarker(test_data);
   test_data = '[{"bid": 3, "rssi": -62},{"bid": 4, "rssi": -75},{"bid": 5, "rssi": -80}]';
-  updateMarker(test_data);
+  updateMarker(test_data);*/
 });
+
+function printPath(path_order){
+  // input: ['p1', 'p2', 'p3', 'c']
+  // the number behind 'p' is the bid
+  // last item must be car lot id string
+  // p2's x, y = deployed_beacons[2].x, deployed_beacons[2].y
+  if(path_order != null && path_order.length > 1){
+    var xy_arr = [];
+    var durations = [];
+    for(var i = 0; i < path_order.length - 1; i++){
+      var index = parseInt(path_order[i].substring(1));
+      var point = deployed_beacons[index];
+      xy_arr.push([point.y, point.x]);
+      durations.push(200);
+    }
+    var car_lot_id = path_order[path_order.length - 1];
+    for(var i = 0; i < car_lots.length; i++){
+      var car_lot = car_lots[i];
+      if(car_lot.car_id == car_lot_id){
+        xy_arr.push([car_lot.y, car_lot.x]);
+        durations.push(200);
+        break;
+      }
+    }
+
+    var myMovingMarker = L.Marker.movingMarker(xy_arr, durations, {icon: markerIcon}).addTo(map);
+    L.polyline(xy_arr, {color: 'red'}).addTo(map);
+    // remove previous marker
+    if(marker != null){
+      map.removeLayer(marker);
+      console.log("remove previous marker");
+    }
+    myMovingMarker.start();
+    /*
+    for(var i = 1; i < path_order.length - 1; i++){
+      var start = parseInt(path_order[i-1].substring(1));
+      var end = parseInt(path_order[i].substring(1));
+      var pointStart = deployed_beacons[start];
+      var pointEnd = deployed_beacons[end];
+      // TODO: draw line from pointStart.x .y to pointEnd.x .y
+      L.polyline([xy(pointStart.x, pointStart.y), xy(pointEnd.x, pointEnd.y)])
+      .addTo(map);
+
+      console.log("start: " + start + ", end: " + end);
+      console.log("pointStart: " + pointStart.x + ", " + pointStart.y + ", pointEnd: " + pointEnd.x + ", " + pointEnd.y);
+    }
+
+    var start = parseInt(path_order[path_order.length - 2].substring(1));
+    var last_access_point = deployed_beacons[start];
+
+    var car_lot_id = path_order[path_order.length - 1];
+    for(var i = 0; i < car_lots.length; i++){
+      if(car_lots[i].car_id == car_lot_id){
+        // TODO: draw from last_access_point.x / .y to car_lots[i].x, car_lots[i].y
+        L.polyline([xy(last_access_point.x, last_access_point.y), xy(car_lots[i].x, car_lots[i].y)])
+        .addTo(map);
+        console.log("last_access_point: " + last_access_point.x + ", " + last_access_point.y + ", car_lots[i]: " + car_lots[i].x + ", " + car_lots[i].y);
+
+        break;
+      }
+    }
+    */
+  }
+}
 
 /*
 Current location point update
@@ -77,11 +150,10 @@ function updateMarker(arr){ // arr must be json array string
   marker.addTo(map).bindPopup('You are around here!'); // y, x in pixel
   console.log("print marker");
 
-  var path_order = graph.findShortestPath('p' + result.bid, 'c'); // ['a', 'c', 'b']
-  if(path_order != null && path_order.length > 1){
-    // TODO: print the path
-  }
+  // Update the path
+  var path_order = graph.findShortestPath('p' + result.bid, 'b'); // ['a', 'c', 'b']
   console.log(path_order);
+  printPath(path_order);
 
   console.log("------------------------------");
 
