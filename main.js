@@ -2,6 +2,9 @@ var map = null;
 var markerIcon = null;
 var marker = null;
 
+var previousPoint = null;
+var currentPoint = null;
+
 var yx = L.latLng;
 
 var xy = function(x, y) {
@@ -49,35 +52,67 @@ $(document).ready(function(){
   Testing
   */
   var test_data = '[{"bid": 1, "rssi": -59},{"bid": 2, "rssi": -62},{"bid": 3, "rssi": -62},{"bid": 4, "rssi": -75},{"bid": 5, "rssi": -80}]';
-  updateMarker(test_data);
+  updateMarker('D', test_data);
   /*test_data = '[{"bid": 1, "rssi": -75},{"bid": 2, "rssi": -62},{"bid": 3, "rssi": -62},{"bid": 4, "rssi": -75},{"bid": 5, "rssi": -80}]';
-  updateMarker(test_data);
+  updateMarker('D', test_data);
   test_data = '[{"bid": 3, "rssi": -62},{"bid": 4, "rssi": -75},{"bid": 5, "rssi": -80}]';
-  updateMarker(test_data);*/
+  updateMarker('D', test_data);*/
 });
 
 function printPath(path_order){
-  // input: ['p1', 'p2', 'p3', 'c']
+  // input: ['p1', 'forkA', 'p2', 'p3', 'c']
   // the number behind 'p' is the bid
   // last item must be car lot id string
   // p2's x, y = deployed_beacons[2].x, deployed_beacons[2].y
   if(path_order != null && path_order.length > 1){
     var xy_arr = [];
     var durations = [];
-    for(var i = 0; i < path_order.length - 1; i++){
-      var index = parseInt(path_order[i].substring(1));
-      var point = deployed_beacons[index];
-      xy_arr.push([point.y, point.x]);
-      durations.push(200);
-    }
-    var car_lot_id = path_order[path_order.length - 1];
-    for(var i = 0; i < car_lots.length; i++){
-      var car_lot = car_lots[i];
-      if(car_lot.car_id == car_lot_id){
-        xy_arr.push([car_lot.y, car_lot.x]);
-        durations.push(200);
-        break;
-      }
+    for(var i = 0; i < path_order.length; i++){
+			if(path_order[i].indexOf('p') == 0 && path_order[i].length > 1){
+				var id = parseInt(path_order[i].substring(1)); // p10 => 10
+				var beacon_points = deployed_beacons.filter(function(obj){
+					return obj.bid == id;
+				});
+				if(beacon_points.length != 0){
+					xy_arr.push([beacon_points[0].y, beacon_points[0].x]);
+		      durations.push(200);
+
+					console.log("push point: " + beacon_points[0].bid);
+				}
+			}
+			else if(path_order[i].indexOf('fork') != -1){
+				var forks = fork_points.filter(function(obj){
+					return obj.fork_id == path_order[i];
+				});
+				if(forks.length != 0){
+					xy_arr.push([forks[0].y, forks[0].x]);
+		      durations.push(200);
+
+					console.log("push fork point: " + forks[0].fork_id);
+				}
+			}
+			else { // case: path_order[i] belongs to car ids
+				var lots = car_lots.filter(function(obj){
+					return obj.car_id == path_order[i];
+				});
+				if(lots.length != 0){
+					xy_arr.push([lots[0].y, lots[0].x]);
+		      durations.push(200);
+
+					console.log("push car lot point: " + lots[0].car_id);
+				}
+				/*
+				var car_lot_id = path_order[i];
+				for(var i = 0; i < car_lots.length; i++){
+		      var car_lot = car_lots[i];
+		      if(car_lot.car_id == car_lot_id){
+		        xy_arr.push([car_lot.y, car_lot.x]);
+		        durations.push(200);
+		        break;
+		      }
+		    }
+				*/
+			}
     }
 
     var myMovingMarker = L.Marker.movingMarker(xy_arr, durations, {icon: markerIcon}).addTo(map);
@@ -130,14 +165,15 @@ input object array = [
 {bid: 5, rssi: -99}
 ];
 */
-function updateMarker(arr){ // arr must be json array string
+function updateMarker(destination, arr){ // arr must be json array string
   var jsonArray = JSON.parse(arr);
   if(jsonArray.length == 0){
     console.log("Empty array");
     return;
   }
-  var result = findClosestBeaconAsPoint(jsonArray);
-  console.log("Match point, bid: " + result.bid + ", x: " + result.x + ", y: " + result.y);
+	previousPoint = currentPoint;
+  currentPoint = findClosestBeaconAsCurrentPoint(jsonArray);
+  console.log("Match point, bid: " + currentPoint.bid + ", x: " + currentPoint.x + ", y: " + currentPoint.y);
 
 	// remove previous marker
   if(marker != null){
@@ -146,12 +182,12 @@ function updateMarker(arr){ // arr must be json array string
   }
 
 	// re-print the marker
-	marker = L.marker([result.y, result.x], {icon: markerIcon});
+	marker = L.marker([currentPoint.y, currentPoint.x], {icon: markerIcon});
   marker.addTo(map).bindPopup('You are around here!'); // y, x in pixel
   console.log("print marker");
 
   // Update the path
-  var path_order = graph.findShortestPath('p' + result.bid, 'b'); // ['a', 'c', 'b']
+  var path_order = graph.findShortestPath('p' + currentPoint.bid, destination); // ['a', 'c', 'b']
   console.log(path_order);
   printPath(path_order);
 
@@ -170,7 +206,7 @@ received_beacons = [
 {bid: 5, rssi: -99}
 ];
 */
-function findClosestBeaconAsPoint(received_beacons){
+function findClosestBeaconAsCurrentPoint(received_beacons){
   var max_rssi = Number.MIN_SAFE_INTEGER;
   var closestBeacon;
   for(var i = 0; i < received_beacons.length; i++){
