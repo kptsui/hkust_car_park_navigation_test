@@ -2,6 +2,9 @@ var map = null;
 var markerIcon = null;
 var marker = null;
 
+var polyLine = null;
+var movingMarker = null;
+
 var previousPoint = null;
 var currentPoint = null;
 
@@ -51,22 +54,55 @@ $(document).ready(function(){
   /*
   Testing
   */
-  var test_data = '[{"bid": 1, "rssi": -59},{"bid": 2, "rssi": -62},{"bid": 3, "rssi": -62},{"bid": 4, "rssi": -75},{"bid": 5, "rssi": -80}]';
-  updateMarker('D', test_data);
-  /*test_data = '[{"bid": 1, "rssi": -75},{"bid": 2, "rssi": -62},{"bid": 3, "rssi": -62},{"bid": 4, "rssi": -75},{"bid": 5, "rssi": -80}]';
-  updateMarker('D', test_data);
-  test_data = '[{"bid": 3, "rssi": -62},{"bid": 4, "rssi": -75},{"bid": 5, "rssi": -80}]';
-  updateMarker('D', test_data);*/
+	setTimeout(function(){
+		var test_data = '[{"bid": 1, "rssi": -59},{"bid": 2, "rssi": -62},{"bid": 4, "rssi": -75},{"bid": 5, "rssi": -80}]';
+		updateMarker('D', test_data);
+	}, 0);
+
+	setTimeout(function(){
+		var test_data = '[{"bid": 1, "rssi": -59},{"bid": 2, "rssi": -62},{"bid": 4, "rssi": -75},{"bid": 5, "rssi": -80}]';
+		updateMarker('D', test_data);
+	}, 200);
+
+	setTimeout(function(){
+		var test_data = '[{"bid": 1, "rssi": -62},{"bid": 2, "rssi": -59},{"bid": 4, "rssi": -75},{"bid": 5, "rssi": -80}]';
+		updateMarker('D', test_data);
+	}, 500);
+
+	setTimeout(function(){
+		var test_data = '[{"bid": 1, "rssi": -62},{"bid": 2, "rssi": -59},{"bid": 4, "rssi": -55},{"bid": 5, "rssi": -80}]';
+		updateMarker('D', test_data);
+	}, 1000);
+
+	setTimeout(function(){
+		var test_data = '[{"bid": 1, "rssi": -62},{"bid": 2, "rssi": -59},{"bid": 4, "rssi": -65},{"bid": 5, "rssi": -55}]';
+		updateMarker('D', test_data);
+	}, 1500);
+
+	setTimeout(function(){
+		var test_data = '[{"bid": 1, "rssi": -62},{"bid": 2, "rssi": -59},{"bid": 4, "rssi": -65},{"bid": 5, "rssi": -55}]';
+		updateMarker('D', test_data);
+	}, 2000);
+
+	setTimeout(function(){
+		var test_data = '[{"bid": 1, "rssi": -62},{"bid": 2, "rssi": -59},{"bid": 4, "rssi": -65},{"bid": 5, "rssi": -55}]';
+		updateMarker('D', test_data);
+	}, 2500);
+
+	setTimeout(function(){
+		var test_data = '[{"bid": 1, "rssi": -62},{"bid": 2, "rssi": -59},{"bid": 4, "rssi": -65},{"bid": 5, "rssi": -55}]';
+		updateMarker('D', test_data);
+	}, 3000);
 });
 
-function printPath(path_order){
+function link(path_order){
   // input: ['p1', 'forkA', 'p2', 'p3', 'c']
   // the number behind 'p' is the bid
   // last item must be car lot id string
   // p2's x, y = deployed_beacons[2].x, deployed_beacons[2].y
   if(path_order != null && path_order.length > 1){
     var yx_arr = [];
-    var durations = [];
+		var duration_arr = [];
     for(var i = 0; i < path_order.length; i++){
 			if(path_order[i].indexOf('p') == 0 && path_order[i].length > 1){
 				var id = parseInt(path_order[i].substring(1)); // p10 => 10
@@ -75,8 +111,7 @@ function printPath(path_order){
 				});
 				if(beacon_points.length != 0){
 					yx_arr.push([beacon_points[0].y, beacon_points[0].x]);
-		      durations.push(100);
-
+					duration_arr.push(100);
 					console.log("push point: " + beacon_points[0].bid);
 				}
 			}
@@ -86,8 +121,7 @@ function printPath(path_order){
 				});
 				if(forks.length != 0){
 					yx_arr.push([forks[0].y, forks[0].x]);
-		      durations.push(100);
-
+					duration_arr.push(100);
 					console.log("push fork point: " + forks[0].fork_id);
 				}
 			}
@@ -97,22 +131,22 @@ function printPath(path_order){
 				});
 				if(lots.length != 0){
 					yx_arr.push([lots[0].y, lots[0].x]);
-		      durations.push(100);
-
+					duration_arr.push(100);
 					console.log("push car lot point: " + lots[0].car_id);
 				}
 			}
     }
-
-    var myMovingMarker = L.Marker.movingMarker(yx_arr, durations, {icon: markerIcon}).addTo(map);
-    L.polyline(yx_arr, {color: 'red'}).addTo(map);
-    // remove previous marker
-    if(marker != null){
-      map.removeLayer(marker);
-      console.log("remove previous marker");
-    }
-    myMovingMarker.start();
+		return {
+			coordinates: yx_arr,
+			durations: duration_arr
+		};
   }
+	else {
+		return {
+			coordinates: [],
+			durations: []
+		};
+	}
 }
 
 /*
@@ -135,21 +169,43 @@ function updateMarker(destination, arr){ // arr must be json array string
   currentPoint = findClosestBeaconAsCurrentPoint(jsonArray);
   console.log("Match point, bid: " + currentPoint.bid + ", x: " + currentPoint.x + ", y: " + currentPoint.y);
 
-	// remove previous marker
-  if(marker != null){
-    map.removeLayer(marker);
-    console.log("remove previous marker");
-  }
+	// update position with moving marker animation
+	if(previousPoint != null
+		&& currentPoint != null
+		&& previousPoint.bid != currentPoint.bid){
+			var moving_path_order = graph.findShortestPath('p' + previousPoint.bid, 'p' + currentPoint.bid);
+			var linked_moving_points = link(moving_path_order);
 
+			// remove previous marker
+			if(movingMarker != null){
+				map.removeLayer(movingMarker);
+				console.log("remove previous marker");
+			}
+
+			movingMarker = L.Marker
+			.movingMarker(
+				linked_moving_points.coordinates,
+				linked_moving_points.durations,
+				{icon: markerIcon}
+			).addTo(map);
+
+			movingMarker.start();
+			console.log("MovingMarker.start");
+
+			// Update the path
+		  var path_order = graph.findShortestPath('p' + currentPoint.bid, destination); // ['a', 'c', 'b']
+		  console.log(path_order);
+		  var linked_points = link(path_order);
+
+			if(polyLine != null){
+				 map.removeLayer(polyLine);
+			}
+			polyLine = L.polyline(linked_points.coordinates, {color: 'yellow'}).addTo(map);
+	}
 	// re-print the marker
-	marker = L.marker([currentPoint.y, currentPoint.x], {icon: markerIcon});
+	/*marker = L.marker([currentPoint.y, currentPoint.x], {icon: markerIcon});
   marker.addTo(map).bindPopup('You are around here!'); // y, x in pixel
-  console.log("print marker");
-
-  // Update the path
-  var path_order = graph.findShortestPath('p' + currentPoint.bid, destination); // ['a', 'c', 'b']
-  console.log(path_order);
-  printPath(path_order);
+  console.log("print marker");*/
 
   console.log("------------------------------");
 
