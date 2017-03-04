@@ -65,7 +65,7 @@ function printPath(path_order){
   // last item must be car lot id string
   // p2's x, y = deployed_beacons[2].x, deployed_beacons[2].y
   if(path_order != null && path_order.length > 1){
-    var xy_arr = [];
+    var yx_arr = [];
     var durations = [];
     for(var i = 0; i < path_order.length; i++){
 			if(path_order[i].indexOf('p') == 0 && path_order[i].length > 1){
@@ -74,8 +74,8 @@ function printPath(path_order){
 					return obj.bid == id;
 				});
 				if(beacon_points.length != 0){
-					xy_arr.push([beacon_points[0].y, beacon_points[0].x]);
-		      durations.push(200);
+					yx_arr.push([beacon_points[0].y, beacon_points[0].x]);
+		      durations.push(100);
 
 					console.log("push point: " + beacon_points[0].bid);
 				}
@@ -85,8 +85,8 @@ function printPath(path_order){
 					return obj.fork_id == path_order[i];
 				});
 				if(forks.length != 0){
-					xy_arr.push([forks[0].y, forks[0].x]);
-		      durations.push(200);
+					yx_arr.push([forks[0].y, forks[0].x]);
+		      durations.push(100);
 
 					console.log("push fork point: " + forks[0].fork_id);
 				}
@@ -96,62 +96,22 @@ function printPath(path_order){
 					return obj.car_id == path_order[i];
 				});
 				if(lots.length != 0){
-					xy_arr.push([lots[0].y, lots[0].x]);
-		      durations.push(200);
+					yx_arr.push([lots[0].y, lots[0].x]);
+		      durations.push(100);
 
 					console.log("push car lot point: " + lots[0].car_id);
 				}
-				/*
-				var car_lot_id = path_order[i];
-				for(var i = 0; i < car_lots.length; i++){
-		      var car_lot = car_lots[i];
-		      if(car_lot.car_id == car_lot_id){
-		        xy_arr.push([car_lot.y, car_lot.x]);
-		        durations.push(200);
-		        break;
-		      }
-		    }
-				*/
 			}
     }
 
-    var myMovingMarker = L.Marker.movingMarker(xy_arr, durations, {icon: markerIcon}).addTo(map);
-    L.polyline(xy_arr, {color: 'red'}).addTo(map);
+    var myMovingMarker = L.Marker.movingMarker(yx_arr, durations, {icon: markerIcon}).addTo(map);
+    L.polyline(yx_arr, {color: 'red'}).addTo(map);
     // remove previous marker
     if(marker != null){
       map.removeLayer(marker);
       console.log("remove previous marker");
     }
     myMovingMarker.start();
-    /*
-    for(var i = 1; i < path_order.length - 1; i++){
-      var start = parseInt(path_order[i-1].substring(1));
-      var end = parseInt(path_order[i].substring(1));
-      var pointStart = deployed_beacons[start];
-      var pointEnd = deployed_beacons[end];
-      // TODO: draw line from pointStart.x .y to pointEnd.x .y
-      L.polyline([xy(pointStart.x, pointStart.y), xy(pointEnd.x, pointEnd.y)])
-      .addTo(map);
-
-      console.log("start: " + start + ", end: " + end);
-      console.log("pointStart: " + pointStart.x + ", " + pointStart.y + ", pointEnd: " + pointEnd.x + ", " + pointEnd.y);
-    }
-
-    var start = parseInt(path_order[path_order.length - 2].substring(1));
-    var last_access_point = deployed_beacons[start];
-
-    var car_lot_id = path_order[path_order.length - 1];
-    for(var i = 0; i < car_lots.length; i++){
-      if(car_lots[i].car_id == car_lot_id){
-        // TODO: draw from last_access_point.x / .y to car_lots[i].x, car_lots[i].y
-        L.polyline([xy(last_access_point.x, last_access_point.y), xy(car_lots[i].x, car_lots[i].y)])
-        .addTo(map);
-        console.log("last_access_point: " + last_access_point.x + ", " + last_access_point.y + ", car_lots[i]: " + car_lots[i].x + ", " + car_lots[i].y);
-
-        break;
-      }
-    }
-    */
   }
 }
 
