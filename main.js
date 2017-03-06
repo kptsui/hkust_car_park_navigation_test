@@ -54,6 +54,27 @@ $(document).ready(function(){
   /*
   Testing
   */
+	var moving_path_order = graph.findShortestPath('p1', 'D');
+	var linked_moving_points = link(moving_path_order);
+
+	movingMarker = L.Marker
+	.movingMarker(
+		linked_moving_points.coordinates,
+		linked_moving_points.durations,
+		{icon: markerIcon}
+	).addTo(map);
+
+	movingMarker.start();
+
+	var path_order = graph.findShortestPath('p1', 'D'); // ['a', 'c', 'b']
+	console.log(path_order);
+	var linked_points = link(path_order);
+
+	if(polyLine != null){
+		 map.removeLayer(polyLine);
+	}
+	polyLine = L.polyline(linked_points.coordinates, {color: 'yellow'}).addTo(map);
+	/*
 	setTimeout(function(){
 		var test_data = '[{"bid": 1, "rssi": -59},{"bid": 2, "rssi": -62},{"bid": 4, "rssi": -75},{"bid": 5, "rssi": -80}]';
 		updateMarker('D', test_data);
@@ -92,7 +113,7 @@ $(document).ready(function(){
 	setTimeout(function(){
 		var test_data = '[{"bid": 1, "rssi": -62},{"bid": 2, "rssi": -59},{"bid": 4, "rssi": -65},{"bid": 5, "rssi": -55}]';
 		updateMarker('D', test_data);
-	}, 3000);
+	}, 3000);*/
 });
 
 function link(path_order){
