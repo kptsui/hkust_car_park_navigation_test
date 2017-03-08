@@ -2,6 +2,8 @@ var map = null;
 var markerIcon = null;
 var marker = null;
 
+var graph = directed_graph;
+
 var polyLine = null;
 var movingMarker = null;
 
@@ -54,26 +56,31 @@ $(document).ready(function(){
   /*
   Testing
   */
-	var moving_path_order = graph.findShortestPath('p1', 'D');
-	var linked_moving_points = link(moving_path_order);
 
-	movingMarker = L.Marker
-	.movingMarker(
-		linked_moving_points.coordinates,
-		linked_moving_points.durations,
-		{icon: markerIcon}
-	).addTo(map);
+	setTimeout(function(){
+		var moving_path_order = graph.findShortestPath('p1', 'D');
+		var linked_moving_points = link(moving_path_order);
 
-	movingMarker.start();
+		movingMarker = L.Marker
+		.movingMarker(
+			linked_moving_points.coordinates,
+			linked_moving_points.durations,
+			{icon: markerIcon}
+		).addTo(map);
 
-	var path_order = graph.findShortestPath('p1', 'D'); // ['a', 'c', 'b']
-	console.log(path_order);
-	var linked_points = link(path_order);
+		movingMarker.start();
 
-	if(polyLine != null){
-		 map.removeLayer(polyLine);
-	}
-	polyLine = L.polyline(linked_points.coordinates, {color: 'yellow'}).addTo(map);
+		var path_order = graph.findShortestPath('p1', 'D'); // ['a', 'c', 'b']
+		console.log(path_order);
+		var linked_points = link(path_order);
+
+		if(polyLine != null){
+			 map.removeLayer(polyLine);
+		}
+		polyLine = L.polyline(linked_points.coordinates, {color: 'yellow'}).addTo(map);
+	}, 600);
+
+
 	/*
 	setTimeout(function(){
 		var test_data = '[{"bid": 1, "rssi": -59},{"bid": 2, "rssi": -62},{"bid": 4, "rssi": -75},{"bid": 5, "rssi": -80}]';
@@ -81,39 +88,40 @@ $(document).ready(function(){
 	}, 0);
 
 	setTimeout(function(){
-		var test_data = '[{"bid": 1, "rssi": -59},{"bid": 2, "rssi": -62},{"bid": 4, "rssi": -75},{"bid": 5, "rssi": -80}]';
-		updateMarker('D', test_data);
+		var test_data = '[{"bid": 1, "rssi": -62},{"bid": 2, "rssi": -59},{"bid": 4, "rssi": -75},{"bid": 5, "rssi": -80}]';
+		updateMarker('p55', test_data);
 	}, 200);
 
 	setTimeout(function(){
 		var test_data = '[{"bid": 1, "rssi": -62},{"bid": 2, "rssi": -59},{"bid": 4, "rssi": -75},{"bid": 5, "rssi": -80}]';
-		updateMarker('D', test_data);
+		updateMarker('p55', test_data);
 	}, 500);
 
 	setTimeout(function(){
-		var test_data = '[{"bid": 1, "rssi": -62},{"bid": 2, "rssi": -59},{"bid": 4, "rssi": -55},{"bid": 5, "rssi": -80}]';
-		updateMarker('D', test_data);
+		var test_data = '[{"bid": 1, "rssi": -55},{"bid": 2, "rssi": -59},{"bid": 4, "rssi": -62},{"bid": 5, "rssi": -80}]';
+		updateMarker('p55', test_data);
 	}, 1000);
 
 	setTimeout(function(){
-		var test_data = '[{"bid": 1, "rssi": -62},{"bid": 2, "rssi": -59},{"bid": 4, "rssi": -65},{"bid": 5, "rssi": -55}]';
-		updateMarker('D', test_data);
+		var test_data = '[{"bid": 1, "rssi": -62},{"bid": 2, "rssi": -59},{"bid": 4, "rssi": -55},{"bid": 5, "rssi": -62}]';
+		updateMarker('p55', test_data);
 	}, 1500);
 
 	setTimeout(function(){
 		var test_data = '[{"bid": 1, "rssi": -62},{"bid": 2, "rssi": -59},{"bid": 4, "rssi": -65},{"bid": 5, "rssi": -55}]';
-		updateMarker('D', test_data);
+		updateMarker('p55', test_data);
 	}, 2000);
 
 	setTimeout(function(){
 		var test_data = '[{"bid": 1, "rssi": -62},{"bid": 2, "rssi": -59},{"bid": 4, "rssi": -65},{"bid": 5, "rssi": -55}]';
-		updateMarker('D', test_data);
+		updateMarker('p55', test_data);
 	}, 2500);
 
 	setTimeout(function(){
 		var test_data = '[{"bid": 1, "rssi": -62},{"bid": 2, "rssi": -59},{"bid": 4, "rssi": -65},{"bid": 5, "rssi": -55}]';
-		updateMarker('D', test_data);
-	}, 3000);*/
+		updateMarker('p55', test_data);
+	}, 3000);
+	*/
 });
 
 function link(path_order){
