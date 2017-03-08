@@ -80,7 +80,6 @@ $(document).ready(function(){
 		polyLine = L.polyline(linked_points.coordinates, {color: 'yellow'}).addTo(map);
 	}, 600);
 
-
 	/*
 	setTimeout(function(){
 		var test_data = '[{"bid": 1, "rssi": -59},{"bid": 2, "rssi": -62},{"bid": 4, "rssi": -75},{"bid": 5, "rssi": -80}]';
@@ -199,7 +198,31 @@ function updateMarker(destination, arr){ // arr must be json array string
   console.log("Match point, bid: " + currentPoint.bid + ", x: " + currentPoint.x + ", y: " + currentPoint.y);
 
 	// update position with moving marker animation
-	if(previousPoint != null
+	// first point received
+	if(previousPoint == null && currentPoint != null){
+		// Update the path
+		var path_order = graph.findShortestPath('p' + currentPoint.bid, destination); // ['a', 'c', 'b']
+		console.log(path_order);
+		var linked_points = link(path_order);
+
+		if(polyLine != null){
+			 map.removeLayer(polyLine);
+		}
+		polyLine = L.polyline(linked_points.coordinates, {color: 'yellow'}).addTo(map);
+
+		// print static marker
+		if(movingMarker != null){
+			map.removeLayer(movingMarker);
+			console.log("remove previous marker");
+		}
+		movingMarker = L.Marker
+		.movingMarker(
+			[[currentPoint.y, currentPoint.x]],
+			[100],
+			{icon: markerIcon}
+		).addTo(map);
+	}
+	else if(previousPoint != null
 		&& currentPoint != null
 		&& previousPoint.bid != currentPoint.bid){
 			var moving_path_order = graph.findShortestPath('p' + previousPoint.bid, 'p' + currentPoint.bid);
